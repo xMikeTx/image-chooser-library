@@ -37,7 +37,9 @@ public class VideoProcessorThread extends MediaProcessorThread {
 
     private final static int MAX_DIRECTORY_SIZE = 5 * 1024 * 1024;
 
-    private final static int MAX_THRESHOLD_DAYS = (int)(0.5 * 24 * 60 * 60 * 1000);
+    private final static int MAX_THRESHOLD_DAYS = (int) (0.5 * 24 * 60 * 60 * 1000);
+
+    private String previewImage;
 
     public VideoProcessorThread(String filePath, String foldername, boolean shouldCreateThumbnails) {
         super(filePath, foldername, shouldCreateThumbnails);
@@ -78,6 +80,8 @@ public class VideoProcessorThread extends MediaProcessorThread {
             downloadAndProcess(filePath);
         } else if (filePath.startsWith("content://com.google.android.gallery3d")) {
             processPicasaMedia(filePath, ".mp4");
+        } else if (filePath.startsWith("content://media/external/video")) {
+            processContentProviderMedia(filePath, ".mp4");
         } else {
             process();
         }
@@ -87,11 +91,23 @@ public class VideoProcessorThread extends MediaProcessorThread {
     protected void process() throws Exception {
         super.process();
         if (shouldCreateThumnails) {
+            createPreviewImage();
             String[] thumbnails = createThumbnails(createThumbnailOfVideo());
             processingDone(this.filePath, thumbnails[0], thumbnails[1]);
         } else {
             processingDone(this.filePath, this.filePath, this.filePath);
         }
+    }
+
+    private String createPreviewImage() throws IOException {
+        Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(filePath, Thumbnails.FULL_SCREEN_KIND);
+        previewImage = FileUtils.getDirectory(foldername) + File.separator
+                + Calendar.getInstance().getTimeInMillis() + ".jpg";
+        File file = new File(previewImage);
+        FileOutputStream stream = new FileOutputStream(file);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        stream.flush();
+        return previewImage;
     }
 
     private String createThumbnailOfVideo() throws IOException {
@@ -112,6 +128,7 @@ public class VideoProcessorThread extends MediaProcessorThread {
             video.setVideoFilePath(original);
             video.setThumbnailPath(thumbnail);
             video.setThumbnailSmallPath(thunbnailSmall);
+            video.setVideoPreviewImage(previewImage);
             listener.onProcessedVideo(video);
         }
     }

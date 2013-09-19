@@ -16,11 +16,8 @@
 
 package com.beanie.imagechooser.api;
 
-import java.io.IOException;
 
-import android.media.ExifInterface;
-
-public class ChosenImage {
+public class ChosenImage extends ChosenMedia {
     private String filePathOriginal;
 
     private String fileThumbnail;
@@ -51,30 +48,18 @@ public class ChosenImage {
         this.fileThumbnailSmall = fileThumbnailSmall;
     }
 
-    public String getOriginalImageHeight() {
-        String height = "";
-        try {
-            ExifInterface exif = new ExifInterface(filePathOriginal);
-            height = exif.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return height;
+    @Override
+    public String getMediaHeight() {
+        return getHeight(filePathOriginal);
     }
 
-    public String getOriginalImageWidth() {
-        String width = "";
-        try {
-            ExifInterface exif = new ExifInterface(filePathOriginal);
-            width = exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return width;
+    @Override
+    public String getMediaWidth() {
+       return getWidth(filePathOriginal);
     }
-
-    public String getFileExtension() {
-        return FileUtils.getFileExtension(filePathOriginal);
+    
+    public String getExtension(){
+        return getFileExtension(filePathOriginal);
     }
 
 }

@@ -126,9 +126,8 @@ public abstract class MediaProcessorThread extends Thread {
             }
             Bitmap bitmap = BitmapFactory.decodeFile(fileImage, options);
             File original = new File(fileImage);
-            File file = new File(
-                    (original.getParent() + File.separator + original.getName()).replace(".",
-                            "_fact_" + scale + "."));
+            File file = new File((original.getParent() + File.separator + original.getName()
+                    .replace(".", "_fact_" + scale + ".")));
             FileOutputStream stream = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
 
@@ -149,11 +148,11 @@ public abstract class MediaProcessorThread extends Thread {
             throw e;
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
+            throw new Exception("Corrupt or deleted file???");
         }
     }
 
-    private void copyFileToDir() throws IOException {
+    private void copyFileToDir() throws Exception {
         try {
             File file;
             file = new File(Uri.parse(filePath).getPath());
@@ -171,10 +170,13 @@ public abstract class MediaProcessorThread extends Thread {
             filePath = copyTo.getAbsolutePath();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            throw e;
+            throw new Exception("File not found");
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Corrupt or deleted file???");
         }
     }
 
@@ -284,6 +286,38 @@ public abstract class MediaProcessorThread extends Thread {
         }
         if (Config.DEBUG) {
             Log.i(TAG, "Picasa Done");
+        }
+    }
+    
+    protected void processContentProviderMedia(String path, String extension) throws Exception {
+        if (Config.DEBUG) {
+            Log.i(TAG, "ContentProvider Started");
+        }
+        try {
+            InputStream inputStream = context.getContentResolver().openInputStream(Uri.parse(path));
+
+            filePath = FileUtils.getDirectory(foldername) + File.separator
+                    + Calendar.getInstance().getTimeInMillis() + extension;
+
+            BufferedOutputStream outStream = new BufferedOutputStream(
+                    new FileOutputStream(filePath));
+            byte[] buf = new byte[2048];
+            int len;
+            while ((len = inputStream.read(buf)) > 0) {
+                outStream.write(buf, 0, len);
+            }
+            inputStream.close();
+            outStream.close();
+            process();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+        if (Config.DEBUG) {
+            Log.i(TAG, "ContentProvider Done");
         }
     }
 }
